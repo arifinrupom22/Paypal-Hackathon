@@ -1,0 +1,439 @@
+// PACT data model.
+// Financial values use PostgreSQL NUMERIC via Prisma Decimal. Timestamps are UTC.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentTier {
+  ROOT
+  CHILD
+}
+
+enum AgentStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum MandateStatus {
+  ACTIVE
+  EXHAUSTED
+  REVOKED
+  EXPIRED
+}
+
+enum ScopeType {
+  MERCHANT
+  CATEGORY
+}
+
+enum ProposalSource {
+  AGENT
+  MANUAL
+  SECURITY_TEST
+}
+
+enum ProposalStatus {
+  PROPOSED
+  AUTHORIZED
+  BLOCKED
+  APPROVAL_REQUIRED
+  COMPLETED
+  FAILED
+}
+
+enum PolicyOutcome {
+  AUTHORIZED
+  BLOCKED
+  REQUIRES_USER_APPROVAL
+  EXPIRED
+  REVOKED
+}
+
+enum TransactionStatus {
+  POLICY_APPROVED
+  AWAITING_BUYER_APPROVAL
+  CAPTURING
+  SETTLED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  CONSUMED
+}
+
+enum WebhookStatus {
+  PROCESSED
+  DUPLICATE
+  REJECTED
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  organization String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions        Session[]
+  agents          Agent[]
+  mandates        Mandate[]         @relation("MandateOwner")
+  createdMandates Mandate[]         @relation("MandateCreator")
+  proposals       Proposal[]
+  policyDecisions PolicyDecision[]
+  transactions    Transaction[]
+  approvals       ApprovalRequest[]
+  auditEvents     AuditEvent[]
+  attackRuns      AttackRun[]
+  idempotencyKeys IdempotencyKey[]
+  webhookEvents   WebhookEvent[]
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+  userAgent  String?
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Agent {
+  id                   String      @id @default(cuid())
+  ownerId              String
+  name                 String
+  description          String?
+  tier                 AgentTier   @default(ROOT)
+  status               AgentStatus @default(ACTIVE)
+  parentAgentId        String?
+  publicKey            String      @db.Text
+  credentialCiphertext String      @db.Text
+  keyFingerprint       String
+  suspendedAt          DateTime?
+  revokedAt            DateTime?
+  lastActiveAt         DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  owner        User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  parentAgent  Agent?  @relation("AgentHierarchy", fields: [parentAgentId], references: [id], onDelete: Restrict)
+  children     Agent[] @relation("AgentHierarchy")
+  mandates     Mandate[] @relation("MandateSubject")
+  rootMandates Mandate[] @relation("MandateRootAgent")
+  proposals    Proposal[]
+
+  @@unique([ownerId, name])
+  @@index([ownerId])
+  @@index([parentAgentId])
+}
+
+model Mandate {
+  id                 String        @id @default(cuid())
+  mandateId          String        @unique
+  ownerId            String
+  agentId            String
+  rootAgentId        String
+  parentMandateId    String?
+  createdById        String
+  title              String
+  description        String?
+  currency           String        @db.VarChar(3)
+  maxTotal           Decimal       @db.Decimal(18, 2)
+  maxPerTransaction  Decimal       @db.Decimal(18, 2)
+  approvalThreshold  Decimal?      @db.Decimal(18, 2)
+  maxTransactions    Int
+  expiresAt          DateTime
+  delegationAllowed  Boolean       @default(false)
+  status             MandateStatus @default(ACTIVE)
+  signature          String        @db.Text
+  signingKeyId       String
+  canonicalHash      String
+  nonce              String        @unique
+  issuedAt           DateTime      @default(now())
+  revokedAt          DateTime?
+  revokedById        String?
+  revocationReason   String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  owner         User           @relation("MandateOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdBy     User           @relation("MandateCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  agent         Agent          @relation("MandateSubject", fields: [agentId], references: [id], onDelete: Restrict)
+  rootAgent     Agent          @relation("MandateRootAgent", fields: [rootAgentId], references: [id], onDelete: Restrict)
+  parentMandate Mandate?       @relation("MandateDelegation", fields: [parentMandateId], references: [id], onDelete: Restrict)
+  childMandates Mandate[]      @relation("MandateDelegation")
+  scopes        MandateScope[]
+  proposals     Proposal[]
+  decisions     PolicyDecision[]
+  transactions  Transaction[]
+  approvals     ApprovalRequest[]
+
+  @@index([ownerId, status])
+  @@index([ownerId, expiresAt])
+  @@index([agentId])
+  @@index([parentMandateId])
+}
+
+model MandateScope {
+  id              String    @id @default(cuid())
+  mandateId       String
+  type            ScopeType
+  value           String
+  normalizedValue String
+
+  mandate Mandate @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+
+  @@unique([mandateId, type, normalizedValue])
+  @@index([mandateId, type])
+}
+
+model Proposal {
+  id             String         @id @default(cuid())
+  proposalId     String         @unique
+  ownerId        String
+  agentId        String
+  mandateId      String
+  merchantName   String
+  merchantId     String?
+  merchantDomain String?
+  category       String
+  amount         Decimal        @db.Decimal(18, 2)
+  currency       String         @db.VarChar(3)
+  description    String         @db.Text
+  lineItems      Json
+  source         ProposalSource @default(AGENT)
+  status         ProposalStatus @default(PROPOSED)
+  aiModel        String?
+  aiRationale    String?
+  rawInstruction String?        @db.Text
+  signature      String         @db.Text
+  canonicalHash  String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  owner          User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  agent          Agent           @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  mandate        Mandate         @relation(fields: [mandateId], references: [id], onDelete: Restrict)
+  policyDecisions PolicyDecision[]
+  transaction     Transaction?
+
+  @@index([ownerId, createdAt])
+  @@index([mandateId, createdAt])
+}
+
+model PolicyDecision {
+  id              String        @id @default(cuid())
+  decisionId      String        @unique
+  ownerId         String
+  proposalId      String
+  mandateId       String
+  agentId         String
+  outcome         PolicyOutcome
+  amount          Decimal       @db.Decimal(18, 2)
+  currency        String        @db.VarChar(3)
+  checks          Json
+  failedChecks    String[]
+  explanation     String        @db.Text
+  executionId     String
+  approvalId      String?
+  decisionLatency Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  owner        User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  proposal     Proposal        @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  mandate        Mandate         @relation(fields: [mandateId], references: [id], onDelete: Restrict)
+  transaction    Transaction?
+
+  @@index([ownerId, createdAt])
+  @@index([mandateId, createdAt])
+  @@index([proposalId])
+  @@index([outcome])
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  transactionId   String            @unique
+  ownerId         String
+  proposalId      String            @unique
+  mandateId       String
+  agentId         String
+  merchantName    String
+  merchantId      String?
+  category        String
+  amount          Decimal           @db.Decimal(18, 2)
+  currency        String            @db.VarChar(3)
+  policyDecisionId String           @unique
+  executionId     String            @unique
+  idempotencyKey  String            @unique
+  status          TransactionStatus @default(POLICY_APPROVED)
+  source          ProposalSource    @default(AGENT)
+  paypalOrderId   String?           @unique
+  paypalCaptureId String?           @unique
+  paypalStatus    String?
+  capturedAmount  Decimal?          @db.Decimal(18, 2)
+  paypalFeeAmount Decimal?          @db.Decimal(18, 2)
+  failureCode     String?
+  failureMessage  String?
+  reservedAt      DateTime          @default(now())
+  capturedAt      DateTime?
+  refundedAt      DateTime?
+  auditRefs       String[]          @default([])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  proposal       Proposal       @relation(fields: [proposalId], references: [id], onDelete: Restrict)
+  mandate        Mandate        @relation(fields: [mandateId], references: [id], onDelete: Restrict)
+  policyDecision PolicyDecision @relation(fields: [policyDecisionId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId, createdAt])
+  @@index([mandateId, status])
+  @@index([status])
+  @@index([paypalOrderId])
+}
+
+model ApprovalRequest {
+  id         String         @id @default(cuid())
+  approvalId String         @unique
+  ownerId    String
+  proposalId String         @unique
+  mandateId  String
+  status     ApprovalStatus @default(PENDING)
+  tokenHash  String         @unique
+  expiresAt  DateTime
+  approvedAt DateTime?
+  rejectedAt DateTime?
+  consumedAt DateTime?
+  createdAt  DateTime       @default(now())
+
+  owner    User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  mandate  Mandate @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, status])
+  @@index([proposalId])
+}
+
+model WebhookEvent {
+  id                String        @id @default(cuid())
+  eventId           String        @unique
+  eventType         String
+  resourceId        String?
+  resourceType      String?
+  ownerId           String?
+  status            WebhookStatus @default(PROCESSED)
+  signatureVerified Boolean       @default(false)
+  payload           Json
+  attempts          Int           @default(1)
+  error             String?
+  processedAt       DateTime?
+  createdAt         DateTime      @default(now())
+
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([eventType])
+  @@index([resourceId])
+}
+
+model AuditEvent {
+  id           String   @id @default(cuid())
+  eventId      String   @unique
+  ownerId      String
+  actorType    String
+  actorId      String?
+  actorLabel   String
+  action       String
+  resourceType String
+  resourceId   String?
+  summary      String
+  details      Json
+  hash         String
+  prevHash     String?
+  signature    String   @db.Text
+  createdAt    DateTime @default(now())
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, createdAt])
+  @@index([action])
+  @@index([resourceId])
+}
+
+model AttackRun {
+  id          String   @id @default(cuid())
+  runId       String   @unique
+  ownerId     String
+  scenario    String
+  title       String
+  threatClass String
+  description String   @db.Text
+  status      String
+  outcome     String
+  decisionId  String?
+  proposalId  String?
+  checks      Json
+  response    Json
+  durationMs  Int      @default(0)
+  executedAt  DateTime @default(now())
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, executedAt])
+  @@index([scenario])
+}
+
+model IdempotencyKey {
+  id          String   @id @default(cuid())
+  ownerId     String
+  key         String
+  scope       String
+  requestHash String
+  statusCode  Int?
+  response    Json?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, key])
+  @@index([expiresAt])
+}
+
+model CatalogItem {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  merchant    String
+  merchantId  String
+  domain      String
+  category    String
+  description String   @db.Text
+  price       Decimal  @db.Decimal(18, 2)
+  currency    String   @db.VarChar(3)
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+  @@index([merchant])
+}

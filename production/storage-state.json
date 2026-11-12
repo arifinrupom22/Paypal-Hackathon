@@ -1,0 +1,25 @@
+{
+  "cookies": [
+    {
+      "name": "pact_session",
+      "value": "dc96JEdV0mX-UctdsZgC3hwlrvsZUkury8Do41sIAr4",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1794547123.329578,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "pact_csrf",
+      "value": "784f0703d6a59c4018f88dbe55434d1444d88ebe6720238e063dbd225d8c672c",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1794547123.330217,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

@@ -1,0 +1,237 @@
+1
+00:00:02,700 --> 00:00:07,978
+An AI agent can choose what to buy, but it
+should never decide how much authority it has.
+
+2
+00:00:07,978 --> 00:00:11,892
+PACT is the permission layer between
+AI intent and money movement.
+
+3
+00:00:12,112 --> 00:00:14,217
+An unrestricted payment credential
+
+4
+00:00:14,217 --> 00:00:18,055
+turns a model mistake or prompt
+injection into financial loss.
+
+5
+00:00:18,055 --> 00:00:21,522
+A confirmation dialog is not
+a boundary; it is UI state.
+
+6
+00:00:21,522 --> 00:00:24,184
+PACT decides whether a proposal is allowed.
+
+7
+00:00:24,404 --> 00:00:26,353
+PACT separates four decisions:
+
+8
+00:00:26,353 --> 00:00:29,731
+AI proposes, PACT verifies
+against a signed mandate,
+
+9
+00:00:29,731 --> 00:00:33,239
+the owner authorizes exceptions,
+and PayPal processes.
+
+10
+00:00:33,239 --> 00:00:35,708
+The agent never gets a payment secret.
+
+11
+00:00:35,928 --> 00:00:38,471
+This is a real Postgres-backed account.
+
+12
+00:00:38,471 --> 00:00:43,427
+Mandates, blocked evaluations and signed
+audit events are persisted records.
+
+13
+00:00:43,427 --> 00:00:46,752
+PayPal is not configured,
+so no payment is claimed.
+
+14
+00:00:46,972 --> 00:00:49,048
+Authority is a signed instrument.
+
+15
+00:00:49,048 --> 00:00:52,068
+This mandate fixes a two-hundred-dollar ceiling,
+
+16
+00:00:52,068 --> 00:00:55,277
+fifty dollars per transaction,
+four authorizations,
+
+17
+00:00:55,277 --> 00:00:57,857
+an expiry, one merchant and one category.
+
+18
+00:00:57,857 --> 00:01:00,562
+PACT rebuilds the payload at decision time.
+
+19
+00:01:00,562 --> 00:01:03,268
+Change a signed field and the proof breaks.
+
+20
+00:01:03,488 --> 00:01:08,735
+The agent has its own Ed25519 identity,
+so every proposal is attributable.
+
+21
+00:01:08,735 --> 00:01:11,004
+Only the public half is exposed.
+
+22
+00:01:11,004 --> 00:01:15,968
+It can propose, but cannot approve
+itself or reach PayPal credentials.
+
+23
+00:01:16,188 --> 00:01:21,396
+The agent selects from the server-controlled
+catalog and creates a signed proposal.
+
+24
+00:01:21,396 --> 00:01:24,658
+PACT re-checks signature,
+ownership, status, expiry,
+
+25
+00:01:24,658 --> 00:01:28,737
+merchant, category, amount, budget,
+count, replay and delegation.
+
+26
+00:01:28,737 --> 00:01:32,815
+The proposal is authorized and
+the budget is reserved atomically.
+
+27
+00:01:32,815 --> 00:01:34,572
+This is still not a payment.
+
+28
+00:01:34,792 --> 00:01:36,163
+Here is the boundary.
+
+29
+00:01:36,163 --> 00:01:40,146
+PACT authorized thirty-eight
+dollars and reserved it locally.
+
+30
+00:01:40,146 --> 00:01:44,848
+PayPal approval has not started, no
+order exists, and no capture exists.
+
+31
+00:01:45,068 --> 00:01:47,356
+Each scenario ran against the real engine
+
+32
+00:01:47,356 --> 00:01:50,536
+with a signed harness mandate
+and a manipulated proposal.
+
+33
+00:01:50,536 --> 00:01:54,442
+Prompt injection is treated as text,
+merchant substitution is blocked,
+
+34
+00:01:54,442 --> 00:01:58,460
+replay is rejected, and concurrent
+spending is serialized by a row lock.
+
+35
+00:01:58,680 --> 00:02:01,839
+This is a rejected proposal, not a settlement.
+
+36
+00:02:01,839 --> 00:02:04,860
+Forty dollars exceeded the remaining budget.
+
+37
+00:02:04,860 --> 00:02:09,255
+Sixteen checks passed, one failed,
+and PayPal was never reached.
+
+38
+00:02:09,255 --> 00:02:11,040
+No transaction is created.
+
+39
+00:02:11,260 --> 00:02:12,787
+Delegation is attenuated.
+
+40
+00:02:12,787 --> 00:02:17,307
+The child receives only a subset of
+the parent's budget, scope and expiry.
+
+41
+00:02:17,307 --> 00:02:18,956
+When the parent is revoked,
+
+42
+00:02:18,956 --> 00:02:22,804
+the child is withdrawn even though
+its signature remains valid.
+
+43
+00:02:23,024 --> 00:02:26,827
+Every sensitive action appends
+a hash-chained, signed record.
+
+44
+00:02:26,827 --> 00:02:32,190
+The page recomputes the chain: one hundred
+percent integrity, zero signature failures.
+
+45
+00:02:32,190 --> 00:02:35,432
+This is application evidence,
+not immutable storage.
+
+46
+00:02:35,652 --> 00:02:38,353
+No PayPal Sandbox credentials exist here.
+
+47
+00:02:38,353 --> 00:02:41,713
+PACT fails closed and will
+not fabricate a payment.
+
+48
+00:02:41,713 --> 00:02:47,050
+The loopback contract test proves the
+adapter, not a genuine Sandbox transaction.
+
+49
+00:02:47,050 --> 00:02:49,356
+Live verification is still pending.
+
+50
+00:02:49,576 --> 00:02:51,905
+AI proposes. PACT verifies.
+
+51
+00:02:51,905 --> 00:02:55,269
+The owner authorizes. PayPal processes.
+
+52
+00:02:55,269 --> 00:03:01,480
+Bounded, auditable permission to buy,
+without giving the agent the keys.
+

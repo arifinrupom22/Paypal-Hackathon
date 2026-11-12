@@ -1,0 +1,111 @@
+{
+  "lead": 0.7,
+  "gap": 0.22,
+  "total": 180.1,
+  "segments": [
+    {
+      "name": "01_opening",
+      "start": 0.7,
+      "end": 9.892,
+      "duration": 9.192,
+      "text": "An AI agent can choose what to buy, but it should never decide how much authority it has. PACT is the permission layer between AI intent and money movement."
+    },
+    {
+      "name": "02_problem",
+      "start": 10.112,
+      "end": 22.184,
+      "duration": 12.072,
+      "text": "An unrestricted payment credential turns a model mistake or prompt injection into financial loss. A confirmation dialog is not a boundary; it is UI state. PACT decides whether a proposal is allowed."
+    },
+    {
+      "name": "03_solution",
+      "start": 22.404,
+      "end": 33.708,
+      "duration": 11.304,
+      "text": "PACT separates four decisions: AI proposes, PACT verifies against a signed mandate, the owner authorizes exceptions, and PayPal processes. The agent never gets a payment secret."
+    },
+    {
+      "name": "04_dashboard",
+      "start": 33.928,
+      "end": 44.752,
+      "duration": 10.824,
+      "text": "This is a real Postgres-backed account. Mandates, blocked evaluations and signed audit events are persisted records. PayPal is not configured, so no payment is claimed."
+    },
+    {
+      "name": "05_mandate",
+      "start": 44.972,
+      "end": 61.268,
+      "duration": 16.296,
+      "text": "Authority is a signed instrument. This mandate fixes a two-hundred-dollar ceiling, fifty dollars per transaction, four authorizations, an expiry, one merchant and one category. PACT rebuilds the payload at decision time. Change a signed field and the proof breaks."
+    },
+    {
+      "name": "06_agent",
+      "start": 61.488,
+      "end": 73.968,
+      "duration": 12.48,
+      "text": "The agent has its own Ed25519 identity, so every proposal is attributable. Only the public half is exposed. It can propose, but cannot approve itself or reach PayPal credentials."
+    },
+    {
+      "name": "07_payment",
+      "start": 74.188,
+      "end": 92.572,
+      "duration": 18.384,
+      "text": "The agent selects from the server-controlled catalog and creates a signed proposal. PACT re-checks signature, ownership, status, expiry, merchant, category, amount, budget, count, replay and delegation. The proposal is authorized and the budget is reserved atomically. This is still not a payment."
+    },
+    {
+      "name": "08_trace",
+      "start": 92.792,
+      "end": 102.848,
+      "duration": 10.056,
+      "text": "Here is the boundary. PACT authorized thirty-eight dollars and reserved it locally. PayPal approval has not started, no order exists, and no capture exists."
+    },
+    {
+      "name": "09_security",
+      "start": 103.068,
+      "end": 116.46,
+      "duration": 13.392,
+      "text": "Each scenario ran against the real engine with a signed harness mandate and a manipulated proposal. Prompt injection is treated as text, merchant substitution is blocked, replay is rejected, and concurrent spending is serialized by a row lock."
+    },
+    {
+      "name": "10_decision",
+      "start": 116.68,
+      "end": 129.04,
+      "duration": 12.36,
+      "text": "This is a rejected proposal, not a settlement. Forty dollars exceeded the remaining budget. Sixteen checks passed, one failed, and PayPal was never reached. No transaction is created."
+    },
+    {
+      "name": "11_delegation",
+      "start": 129.26,
+      "end": 140.804,
+      "duration": 11.544,
+      "text": "Delegation is attenuated. The child receives only a subset of the parent's budget, scope and expiry. When the parent is revoked, the child is withdrawn even though its signature remains valid."
+    },
+    {
+      "name": "12_audit",
+      "start": 141.024,
+      "end": 153.432,
+      "duration": 12.408,
+      "text": "Every sensitive action appends a hash-chained, signed record. The page recomputes the chain: one hundred percent integrity, zero signature failures. This is application evidence, not immutable storage."
+    },
+    {
+      "name": "13_paypal",
+      "start": 153.652,
+      "end": 167.356,
+      "duration": 13.704,
+      "text": "No PayPal Sandbox credentials exist here. PACT fails closed and will not fabricate a payment. The loopback contract test proves the adapter, not a genuine Sandbox transaction. Live verification is still pending."
+    },
+    {
+      "name": "14_close",
+      "start": 167.576,
+      "end": 179.48,
+      "duration": 11.904,
+      "text": "AI proposes. PACT verifies. The owner authorizes. PayPal processes. Bounded, auditable permission to buy, without giving the agent the keys."
+    },
+    {
+      "name": "tail",
+      "start": 179.7,
+      "end": 180.1,
+      "duration": 0.4
+    }
+  ]
+}

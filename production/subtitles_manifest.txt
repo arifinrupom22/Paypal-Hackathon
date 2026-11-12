@@ -1,0 +1,8 @@
+cues=52
+segments=14
+first=00:00:02,700
+last=00:03:01,480
+min_cue_seconds=1.371
+max_cue_seconds=6.211
+max_line_chars=48
+intro_offset=2.0
